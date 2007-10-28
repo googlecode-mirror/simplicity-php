@@ -2,8 +2,8 @@
 class Router extends Core {
 	
 	static private $routes;
-
-	static function processRequest(&$request) {
+	
+	static public function processRequest(&$request) {
 		if (is_array($request->url)) {
 			if (!self::loadRoutes()) return false;
 			
@@ -17,12 +17,20 @@ class Router extends Core {
 			$request->url = isset(self::$routes[$request->error]) ? self::$routes[$request->error] : array();
 			$request->url = substr($request->url,1);
 			$request->url = explode('/',$request->url);
-			if (!self::isValidPath($request->url)) $request->url = array(); 
+			if (!self::isValidPath($request->url)) $request->url = array();
 		}
 		
 		return count($request->url) ? true : false;
 	}
 
+	static public function setError($err,&$request) {
+		$request->error = $err;
+		$request->url = isset(self::$routes[$err]) ? self::$routes[$err] : array();
+		$request->url = substr($request->url,1);
+		$request->url = explode('/',$request->url);
+		if (!self::isValidPath($request->url)) $request->url = array(); 
+	}
+	
 	static private function loadRoutes() {
 		if (!file_exists(SIMPLICITY_CONF.'routes.php')) return false;
 		@include(SIMPLICITY_CONF.'routes.php');
@@ -55,10 +63,10 @@ class Router extends Core {
 	}
 	
 	static private function mapPath($url) {
-		if (self::isValidPath($url)) return $url;
+		if (self::isValidPath($url)) return implode('/',$url);
 		
 		$map = '/'.implode('/',$url);
-	
+		
 		if (isset(self::$routes[$map])) return substr(self::$routes[$map],1);
 
 		foreach (self::$routes as $route => $target) {
@@ -74,7 +82,5 @@ class Router extends Core {
 		}
 		return false;
 	}
-
-	
 }
 ?>

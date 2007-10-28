@@ -1,13 +1,7 @@
 <?
 require_once("../simplicity/simplicity.php");
 
-define('SIMPLICITY_WEBROOT','/home/john/eclipse/Simplicity Framework/');
+define('SIMPLICITY_WEBROOT','/home/john/eclipse/Simplicity PHP/');
 
 Simplicity::Start();
-
-//Simplicity::$Application->Reset();
-
-//debug(Simplicity::$Request);
-//debug(Simplicity::$Application);
-//debug(Simplicity::$Session);
 ?>

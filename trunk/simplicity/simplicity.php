@@ -3,61 +3,55 @@ class Simplicity {
 
 	static $Application;
 	static $Session;
-	
+
 	static $Request;
 	
 	static $Controller;
 	
+	static $Template;
+	
 	static public function Start() {
 		ob_start();
-
 		self::initEnvironment();
 
 		self::loadConfig('core');
 		self::loadConfig('errors');
-		
 		self::loadCore('Utils');
 		
 		Utils::load('Inflector');
 		Utils::load('Error');
 		Utils::load('Sanitize');
-		
 		self::$Application = self::loadCore('Application');
 		self::$Session = self::loadCore('Session');
 		self::$Request = self::loadCore('Request');
-				
+	
 		self::loadCore('Router');
-				
+
 		Router::processRequest(self::$Request);
-		
-		if (self::$Request->error != 200) {
-			$err = self::$Request->error;
-			if (!count(self::$Request->url)) {
-				if (!isset(HTTPErrors::$errors[self::$Request->error])) self::$Request->error = 500;
-				
-				if (isset(HTTPErrors::$errors[self::$Request->error])) {
-					$code = self::$Request->error;
-					$message = HTTPErrors::$errors[self::$Request->error]; 
-				} 
-				
-				header("HTTP/1.0 {$code} {$message}");
-				header("Status: {$code} {$message}");
-				die("
-					<h1>Error {$code}!</h1>
-					<p>{$message}</p>
-				");
-			}
-		} 
-		
+
+		self::showError();
+
 		$controller = array_shift(self::$Request->url);
 		$method = array_shift(self::$Request->url);
-		
+
 		self::$Request->params = self::$Request->url;
 		self::$Request->url = array($controller,$method);
-	
+
 		self::showPage($controller,$method);
 	}
-		
+
+	static public function templateAssign($name,$value) {
+		if (is_object(self::$Template)) {
+			self::$Template->set($name, $value);
+		}
+	}
+	
+	static public function setTemplate($template) {
+		if (is_object(self::$Template)) {
+			self::$Template->setTemplate($template);
+		}
+	}
+	
 	static public function showPage($controller,$method,$params=array()) {		
 		if (!($class = self::useController($controller))) die('Error loading controller.');
 		
@@ -98,13 +92,54 @@ class Simplicity {
 			die();
 		}
 		
+		$template = VIEWS.$controller.'/'.Inflector::underscore($method).'.html';
+		
+		if (!file_exists($template)) self::showError(404);
+
+		self::loadLib('PHPTAL.php');
+		
+		self::$Template = new PHPTAL();
+		
 		$view = 'view'.$method;
+		
 		if (is_callable(array($object,$view))) {
 			$object->$view($params);
-			
 		}
+		
+		self::setTemplate($template);
+		
+		try {
+		    echo self::$Template->execute();
+		}
+		catch (Exception $e) {
+		    debug($e);
+		}
+		die();
 	}
 	
+	static public function showError($err=null) {
+		if (isset($err)) {
+			Router::setError($err,self::$Request);
+		}
+		if (self::$Request->error != 200) {
+			if (!count(self::$Request->url)) {
+				if (!isset(HTTPErrors::$errors[self::$Request->error])) self::$Request->error = 500;
+				
+				if (isset(HTTPErrors::$errors[self::$Request->error])) {
+					$code = self::$Request->error;
+					$message = HTTPErrors::$errors[self::$Request->error]; 
+				} 
+				
+				header("HTTP/1.0 {$code} {$message}");
+				header("Status: {$code} {$message}");
+				die("
+					<h1>Error {$code}!</h1>
+					<p>{$message}</p>
+				");
+			}
+		}
+	}
+	 
 	static public function useController($controller) {
 		$controller = Inflector::underscore($controller);
 		$class = 'controller'.Inflector::camelize($controller);
@@ -140,7 +175,7 @@ class Simplicity {
 		array_pop($spl);$spl[] = 'simplicity';
 
 		define('SIMPLICITY_ROOT',implode(DS,$spl).DS);
-
+		
 		array_pop($spl);$spl[] = 'config';
 
 		define('SIMPLICITY_CONF',implode(DS,$spl).DS);
@@ -155,11 +190,18 @@ class Simplicity {
 
 		define('LIBS',SIMPLICITY_APP.'libs'.DS);
 		
+		$old = ini_get('include_path');
+		ini_set('include_path', $old.':'.LIBS.':'.SIMPLICITY_LIBS);
+		
 		define('RESOURCES',SIMPLICITY_APP.'resources'.DS);
 		
 		define('CONTROLLERS',RESOURCES.'controllers'.DS);
 		define('MODELS',RESOURCES.'models'.DS);
 		define('VIEWS',RESOURCES.'views'.DS);
+		
+		define('PHPTAL_FORCE_REPARSE', 1);		
+		define('PHPTAL_PHP_CODE_DESTINATION', TEMP);
+		define('PHPTAL_TEMPLATE_REPOSITORY', VIEWS);
 	}
 
 	static private function loadConfig($config) {
@@ -185,6 +227,11 @@ class Simplicity {
 		if (eval("return {$core}::checkStatic();")) {
 			return new $core;
 		}
+		return true;
+	}
+
+	static private function loadLib($lib) {
+		if (!@require_once($lib)) return false;
 		return true;
 	}
 }
