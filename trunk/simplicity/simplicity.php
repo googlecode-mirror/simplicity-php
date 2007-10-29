@@ -3,13 +3,12 @@ class Simplicity {
 
 	static $Application;
 	static $Session;
-
 	static $Request;
-	
 	static $Controller;
-	
 	static $Template;
 	
+	static private $_auto_load = false;
+
 	static public function Start() {
 		ob_start();
 		self::initEnvironment();
@@ -22,12 +21,15 @@ class Simplicity {
 		Utils::load('Inflector');
 		Utils::load('Error');
 		Utils::load('Sanitize');
+		
 		self::$Application = self::loadCore('Application');
 		self::$Session = self::loadCore('Session');
 		self::$Request = self::loadCore('Request');
 	
 		self::loadCore('Router');
 		self::loadCore('Controller');
+		
+		self::autoLoadEnabled();
 		
 		Router::processRequest(self::$Request);
 
@@ -42,6 +44,14 @@ class Simplicity {
 		self::showPage($controller,$method);
 	}
 
+	static public function autoLoad() {
+		return self::$_auto_load; 
+	}
+
+	static private function autoLoadEnabled() {
+		self::$_auto_load = true; 
+	}
+	
 	static public function templateAssign($name,$value) {
 		if (is_object(self::$Template)) {
 			self::$Template->set($name, $value);
@@ -154,7 +164,11 @@ class Simplicity {
 		}
 		return $class;
 	}
-		
+
+	static public function useModel($model) {
+		return false;	
+	}
+	
 	static private function initEnvironment() {
 		if (stristr($_SERVER['SERVER_SOFTWARE'],'win32')) {
 			define("SIMPLICITY_WIN32",true);
@@ -246,6 +260,12 @@ class Core {
 	
 	static public function checkStatic() {
 		return self::LOAD_STATIC;
+	}
+}
+
+function __autoload($class) {
+	if (class_exists('Doctrine')) {
+		if (Doctrine::autoload($class)) return true;
 	}
 }
 ?>
