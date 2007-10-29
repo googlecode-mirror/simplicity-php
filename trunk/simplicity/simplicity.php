@@ -16,6 +16,7 @@ class Simplicity {
 
 		self::loadConfig('core');
 		self::loadConfig('errors');
+		
 		self::loadCore('Utils');
 		
 		Utils::load('Inflector');
@@ -26,7 +27,8 @@ class Simplicity {
 		self::$Request = self::loadCore('Request');
 	
 		self::loadCore('Router');
-
+		self::loadCore('Controller');
+		
 		Router::processRequest(self::$Request);
 
 		self::showError();
@@ -52,12 +54,14 @@ class Simplicity {
 		}
 	}
 	
-	static public function showPage($controller,$method,$params=array()) {		
+	static public function showPage($controller,$method=null,$params=array()) {		
 		if (!($class = self::useController($controller))) die('Error loading controller.');
 		
 		$object = new $class();
 		
 		if (!is_object($object)) die('Error loading controller.');
+		
+		$method = $method ? $method : Inflector::underscore($object->getDefaultView());
 		
 		$method = Inflector::camelize(Sanitize::string(strtolower($method),"a-z0-9_"));
 		

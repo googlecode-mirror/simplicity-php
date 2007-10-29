@@ -7,7 +7,7 @@ class Router extends Core {
 		if (is_array($request->url)) {
 			if (!self::loadRoutes()) return false;
 			
-			if (count($request->url) == 0 ) $request->url = isset(self::$routes['default']) ? self::$routes['default'] : array();
+			if (count($request->url) == 0 ) $request->url = isset(self::$routes['default']) ? explode('/',substr(self::$routes['default'],1)) : array();
 
 			$request->url = explode('/',self::mapPath($request->url));
 			$request->error = self::isValidPath($request->url) ? 200 : 404;
@@ -48,6 +48,8 @@ class Router extends Core {
 		
 		if (!is_object($object)) return false;
 		
+		$url[1] = isset($url[1]) ? $url[1] : Inflector::underscore($object->getDefaultView());
+		
 		$method = Inflector::camelize(Sanitize::string(strtolower($url[1]),"a-z0-9_"));
 		
 		$action = 'action'.$method;
@@ -58,13 +60,13 @@ class Router extends Core {
 		
 		$view = 'view'.$method;
 		if (is_callable(array($object,$view))) return true;
-		
+
 		return false;
 	}
 	
 	static private function mapPath($url) {
 		if (self::isValidPath($url)) return implode('/',$url);
-		
+
 		$map = '/'.implode('/',$url);
 		
 		if (isset(self::$routes[$map])) return substr(self::$routes[$map],1);

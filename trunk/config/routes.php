@@ -2,7 +2,7 @@
 $routes = array(
 	
 	//Defaults
-	"default"							=>	'/home',
+	"default"							=>	'/other',
 	"404"								=> 	'/error/view/404',
 	"500"								=> 	'/error/view/500',
 	
