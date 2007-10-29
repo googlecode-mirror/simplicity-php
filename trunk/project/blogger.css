@@ -61,6 +61,7 @@ h1,h2,h3,h4,h5,h6 {
 	margin: 0px;
 }
 
+/*
 h1 a:link {
 	text-decoration: none;
 	color: #F5DEB3
@@ -80,7 +81,7 @@ h1 {
 	font: bold 300% Verdana, Sans-Serif;
 	letter-spacing: -2px;
 }
-
+*/
 h2 {
 	color: #9E5205;
 	font-weight: bold;
