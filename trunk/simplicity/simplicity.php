@@ -217,7 +217,7 @@ class Simplicity {
 		define('MODELS',RESOURCES.'models'.DS);
 		define('VIEWS',RESOURCES.'views'.DS);
 		
-		define('PHPTAL_FORCE_REPARSE', 1);		
+		define('PHPTAL_FORCE_REPARSE', 0);		
 		define('PHPTAL_PHP_CODE_DESTINATION', TEMP);
 		define('PHPTAL_TEMPLATE_REPOSITORY', VIEWS);
 	}
