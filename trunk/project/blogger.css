@@ -53,7 +53,7 @@ a:hover {
 	border-bottom: 1px solid #000;
 	background: url(http://simplicity-php.googlecode.com/svn/trunk/project/header_back.png) repeat-x top left #fff;
 	color: white;
-	height: 200px;
+	height: 150px;
 }
 
 h1,h2,h3,h4,h5,h6 {
@@ -61,7 +61,6 @@ h1,h2,h3,h4,h5,h6 {
 	margin: 0px;
 }
 
-/*
 h1 a:link {
 	text-decoration: none;
 	color: #F5DEB3
@@ -73,15 +72,15 @@ h1 a:visited {
 }
 
 h1 {
-	padding: 25px 0px 10px 5%;
-	border-top: double 3px #BF5C00;
-	border-bottom: solid 1px #E89E47;
-	color: #F5DEB3;
-	background: #DE7008;
-	font: bold 300% Verdana, Sans-Serif;
-	letter-spacing: -2px;
+	background: url(http://simplicity-php.googlecode.com/svn/trunk/project/logo.png) no-repeat top left #fff;;
+	height: 150px;
+	width: 200px;
 }
-*/
+
+h1 span {
+	display: none;
+}
+
 h2 {
 	color: #9E5205;
 	font-weight: bold;
