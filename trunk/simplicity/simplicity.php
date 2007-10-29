@@ -166,7 +166,7 @@ class Simplicity {
 	}
 
 	static public function useModel($model) {
-		return false;	
+		return false;
 	}
 	
 	static private function initEnvironment() {

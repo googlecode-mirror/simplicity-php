@@ -32,9 +32,27 @@ class Router extends Core {
 	}
 	
 	static private function loadRoutes() {
-		if (!file_exists(SIMPLICITY_CONF.'routes.php')) return false;
-		@include(SIMPLICITY_CONF.'routes.php');
-		if (!isset($routes) || !is_array($routes)) return false;
+		if (!file_exists(SIMPLICITY_CONF.'routes.xml')) {
+			self::$routes = array();
+			return true;
+		}
+		$xml = new SimpleXMLElement(file_get_contents(SIMPLICITY_CONF.'routes.xml'));
+		
+		$routes = array();
+
+		$top = $xml->xpath('//routes');
+		if ((string) $top[0]['default']) {
+			$routes['default'] = (string) $top[0]['default'];
+		}
+		
+		foreach ($xml->xpath('//route') as $route) {
+    		$routes[(string) $route->match] = (string) $route->target; 
+		}
+		
+		foreach ($xml->xpath('//error') as $error) {
+    		$routes[(string) $error->code] = (string) $error->target;
+		}
+			
 		self::$routes = $routes;
 		return true;
 	}
