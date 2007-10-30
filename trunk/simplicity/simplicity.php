@@ -7,7 +7,7 @@ class Simplicity {
 	static $Controller;
 	static $Template;
 	
-	static private $_auto_load = false;
+	static $ConnectionManager;
 
 	static public function Start() {
 		ob_start();
@@ -29,8 +29,6 @@ class Simplicity {
 		self::loadCore('Router');
 		self::loadCore('Controller');
 		
-		self::autoLoadEnabled();
-		
 		Router::processRequest(self::$Request);
 
 		self::showError();
@@ -44,14 +42,10 @@ class Simplicity {
 		self::showPage($controller,$method);
 	}
 
-	static public function autoLoad() {
-		return self::$_auto_load; 
+	static public function getConnection() {
+		return self::$Connection;
 	}
-
-	static private function autoLoadEnabled() {
-		self::$_auto_load = true; 
-	}
-	
+		
 	static public function templateAssign($name,$value) {
 		if (is_object(self::$Template)) {
 			self::$Template->set($name, $value);
@@ -166,7 +160,29 @@ class Simplicity {
 	}
 
 	static public function useModel($model) {
-		return false;
+		if (!is_object(self::$ConnectionManager)) {
+			if (!class_exists('Doctrine')) { 
+				self::loadLib('Doctrine.php');
+				spl_autoload_register(array('Doctrine', 'autoload'));
+			}
+			self::$ConnectionManager = Doctrine_Manager::getInstance();
+			
+			$xml = new SimpleXMLElement(file_get_contents(SIMPLICITY_CONF.'db.xml'));	
+			
+			$cnt = 0;
+			foreach ($xml->xpath('//connection') as $connection) {
+    			self::$ConnectionManager->openConnection((string) $connection->dsn,(string) $connection->name,(($cnt > 0) ? false : true)); 
+			}
+		}
+		
+		$model = Inflector::underscore($model);
+		$class = Inflector::camelize($model);
+		if (!class_exists($class)) {
+			if (!file_exists(MODELS.$model.'.php')) return false;
+			@include_once(MODELS.$model.'.php');
+			if (!class_exists($class)) return false;
+		}
+		return $class;
 	}
 	
 	static private function initEnvironment() {
@@ -260,12 +276,6 @@ class Core {
 	
 	static public function checkStatic() {
 		return self::LOAD_STATIC;
-	}
-}
-
-function __autoload($class) {
-	if (class_exists('Doctrine')) {
-		if (Doctrine::autoload($class)) return true;
 	}
 }
 ?>
