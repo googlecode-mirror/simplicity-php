@@ -16,7 +16,8 @@ class Request extends Core {
 	public $original_request;
 
 	function __construct() {
-		$spl = explode("/",$_GET['url']);
+		$url = isset($_GET['url']) ? $_GET['url'] : ""; 
+		$spl = explode("/",$url);
 		$spl = Utils::array_strip_empty($spl);
 		$spl = Sanitize::string($spl,'._');
 		unset($_GET['url']);

@@ -1,7 +1,7 @@
 <?php
 class Inflector
 {
-    function camelize($word) {
+    static function camelize($word) {
     	$word = strtolower($word);
     	$word = str_replace(' ','_',$word);
     	$word = str_replace('_',' ',$word);
@@ -10,7 +10,7 @@ class Inflector
     	return $word;
     }
 
-    function underscore($word) {
+    static function underscore($word) {
     	$word = str_replace(' ','',$word);
     	$word = preg_replace('/([A-Z]{1})/','_$1',$word);
     	$word = strtolower($word);

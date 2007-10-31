@@ -12,34 +12,41 @@ class Simplicity {
 	static public function Start() {
 		ob_start();
 		self::initEnvironment();
-
-		self::loadConfig('core');
-		self::loadConfig('errors');
+		self::loadCore('Error');
 		
-		self::loadCore('Utils');
+		try {
+			self::loadConfig('core');
+			self::loadConfig('errors');
+			
+			self::loadCore('Utils');
+			
+			Utils::load('Inflector');
+			Utils::load('Sanitize');
+			
+			self::$Application = self::loadCore('Application');
+			self::$Session = self::loadCore('Session');
+			self::$Request = self::loadCore('Request');
 		
-		Utils::load('Inflector');
-		Utils::load('Error');
-		Utils::load('Sanitize');
-		
-		self::$Application = self::loadCore('Application');
-		self::$Session = self::loadCore('Session');
-		self::$Request = self::loadCore('Request');
+			self::loadCore('Router');
+			self::loadCore('Controller');
+			
+			Router::processRequest(self::$Request);
 	
-		self::loadCore('Router');
-		self::loadCore('Controller');
-		
-		Router::processRequest(self::$Request);
-
-		self::showError();
-
-		$controller = array_shift(self::$Request->url);
-		$method = array_shift(self::$Request->url);
-
-		self::$Request->params = self::$Request->url;
-		self::$Request->url = array($controller,$method);
-
-		self::showPage($controller,$method);
+			self::showError();
+	
+			$controller = array_shift(self::$Request->url);
+			$method = array_shift(self::$Request->url);
+	
+			self::$Request->params = self::$Request->url;
+			self::$Request->url = array($controller,$method);
+	
+			self::showPage($controller,$method);
+		} 
+		catch (Exception $e) {
+			if ($e->getSeverity() <= ini_get('error_reporting')) {
+				Error::displayExteption($e);	
+			}
+		}
 	}
 
 	static public function getConnection() {
@@ -186,12 +193,16 @@ class Simplicity {
 	}
 	
 	static private function initEnvironment() {
+		error_reporting(E_STRICT);
+		ini_set('display_errors',true);
+		date_default_timezone_set("UTC");
+		
 		if (stristr($_SERVER['SERVER_SOFTWARE'],'win32')) {
 			define("SIMPLICITY_WIN32",true);
 		} else {
 			define("SIMPLICITY_WIN32",false);
 		}
-
+			
 		define("DS",DIRECTORY_SEPARATOR);
 				
 		define('SIMPLICITY_WEBROOT',$_SERVER['DOCUMENT_ROOT']);
@@ -267,11 +278,17 @@ class Simplicity {
 }
 
 class Core {
-	
 	const LOAD_STATIC = true;
 	
 	static public function checkStatic() {
 		return self::LOAD_STATIC;
 	}
 }
+
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+    throw new ErrorException($message, 0, $severity, $filename, $lineno);
+    return false;
+}
+
+set_error_handler('exceptions_error_handler');
 ?>

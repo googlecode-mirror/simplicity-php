@@ -1,7 +1,7 @@
 <?
 class Sanitize {
 
-	public function string($val,$accept=null) {
+	static public function string($val,$accept=null) {
 		if (is_array($val)) {
 			foreach ($val as $k => $v) {
 				$val[$k] = Sanitize::string($v,$accept);
@@ -13,21 +13,21 @@ class Sanitize {
 		}
 	}
 
-	public function integer($val) {
+	static public function integer($val) {
 		$val = preg_replace('/[^0-9]*/','',$val);
 		return (strlen($val) >= 1) ? $val : false;
 	}
 
-	public function decimal($val) {
+	static public function decimal($val) {
 		$val = preg_replace('/[^0-9.]*/','',$val);
 		return (strlen($val) >= 3) ? $val : false;
 	}
 
-	public function date($val) {
+	static public function date($val) {
 		return preg_replace('/[^\w]*/','',$val);
 	}
 
-	public function email($val) {
+	static public function email($val) {
 		return preg_replace('/[^\+\-\.0-9A-Za-z_@]*/','',$val);
 	}
 }

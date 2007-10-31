@@ -133,7 +133,7 @@ class MemcacheSessionBackend implements iSessionBackend {
 					}
 				}
 				$this->_memcache->delete($path);
-				$this->unRegisterSession($skey);
+				if (isset($skey)) $this->unRegisterSession($skey);
 			}
 		}
 	}

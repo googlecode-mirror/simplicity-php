@@ -75,7 +75,7 @@ class Session extends Core {
 		}
 	}
 
-	public function Session() {
+	public function getSession() {
 		if (is_object($this->_backend)) {
 			return $this->_backend;
 		} else {

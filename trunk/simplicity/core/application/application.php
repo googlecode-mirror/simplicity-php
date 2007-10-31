@@ -62,7 +62,7 @@ class Application extends Core {
 		}
 	}
 
-	public function Application() {
+	public function getApplication() {
 		if (is_object($this->_backend)) {
 			return $this->_backend;
 		} else {
