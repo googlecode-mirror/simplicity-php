@@ -193,15 +193,11 @@ class Simplicity {
 		}
 
 		define("DS",DIRECTORY_SEPARATOR);
-
-		if (!defined("SIMPLICITY_WEBROOT")) {
-			define('SIMPLICITY_WEBROOT',$_SERVER['DOCUMENT_ROOT']);
-			$spl = explode(DS,$_SERVER['SCRIPT_FILENAME']);
-		} else {
-			$filename = basename($_SERVER['SCRIPT_FILENAME']);
-			$spl = explode(DS,SIMPLICITY_WEBROOT.DS.$filename);
-		}
-
+				
+		define('SIMPLICITY_WEBROOT',$_SERVER['DOCUMENT_ROOT']);
+				
+		$spl = explode(DS,__FILE__);
+		
 		array_pop($spl);array_pop($spl);$spl[] = 'app';
 
 		define('SIMPLICITY_APP',implode(DS,$spl).DS);
