@@ -1,0 +1,6 @@
+#summary Simplicity Specification
+#labels specification,blueprints
+
+= Introduction =
+
+This will be used to write specifications for features of the framework. These specifications are attached to [https://blueprints.launchpad.net/simplicity/ Launchpad Blueprints].
