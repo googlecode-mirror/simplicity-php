@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<routes default="/other">
-	<error code="404" target="/error/view/404" />
-	
-	<route match="/test" target="/other/view" />
-	<route match="/test/bla" target="/other/their_test" />
-	<route match="/test/([a-z0-9_]*)/([a-z0-9_]*)" target="/other/their_test" />
-</routes>
