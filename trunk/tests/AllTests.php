@@ -3,7 +3,7 @@
 /**
  * Static test suite.
  */
-class allTests extends PHPUnit_Framework_TestSuite {
+class phpucAllTests extends PHPUnit_Framework_TestSuite {
 	
 	/**
 	 * Constructs the test suite handler.
