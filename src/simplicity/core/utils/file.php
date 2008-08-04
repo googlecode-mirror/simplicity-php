@@ -9,7 +9,7 @@ class smp_File
   static public function serialize ($file, $data)
   {
     $data = addslashes(serialize($data));
-    $code = '<? \$data = unserialize("' . $data . '"); ?>';
+    $code = '<? $data = unserialize("' . $data . '"); ?>';
     self::write($file, $code);
   }
 
@@ -19,6 +19,7 @@ class smp_File
     {
       return false;
     }
+    $data = "";
     ob_start();
     include ($file);
     ob_end_clean();
