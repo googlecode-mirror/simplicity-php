@@ -62,6 +62,7 @@ class Simplicity
    */
   public function init ()
   {
+  	ob_start();
     $this->initRoot()->initId()->initTemp()->initUtils()->initLoader()->initError();
     $this->_init = true;
     return $this;

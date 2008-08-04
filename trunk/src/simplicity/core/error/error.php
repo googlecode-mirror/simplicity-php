@@ -3,16 +3,17 @@
 class smp_Error {
 
   private $_exception_map = array(
-    'default' => 'smp_ExceptionDisplay'
+    'default' => 'smp_ExceptionDisplay',
+  	'ErrorException' => 'smp_ErrorExceptionDisplay'
   );
   
   public function __construct() {
     error_reporting(E_ALL | E_STRICT | E_NOTICE);
-    ini_set('display_errors',true);
+    ini_set('display_errors',false);
     
     set_error_handler(array($this,'handleError'));
     set_exception_handler(array($this,'handleException'));
-
+	register_shutdown_function(array($this,'shutdownFunction'));
   }
   
   private function display(Exception $e) {
@@ -22,14 +23,14 @@ class smp_Error {
     }
 
     if (!($this->_exception_map[$class] instanceof smp_ExceptionDisplay)) {
-      $this->_exception_map[$class] = new $this->_exception_map[$class]();
+      $this->_exception_map[$class] = new $this->_exception_map[$class]($e);
       if (!($this->_exception_map[$class] instanceof smp_ExceptionDisplay)) {
         $class = 'default';
-        $this->_exception_map[$class] = new $this->_exception_map[$class]();        
+        $this->_exception_map[$class] = new $this->_exception_map[$class]($e);        
       }
     }
     
-    $this->_exception_map[$class]->display($e);
+    $this->_exception_map[$class]->display();
   }
   
   public function handleError($severity,$message,$file='', $line=0) {
@@ -38,5 +39,17 @@ class smp_Error {
   
   public function handleException(Exception $e) {
       $this->display($e);
+  } 
+  
+  public function shutdownFunction() {
+  	restore_error_handler();
+  	restore_exception_handler();
+  	
+  	$error = error_get_last();
+  	if (is_array($error) && ($error['type'] == E_PARSE || $error['type'] == E_ERROR)) { 
+  		$this->display(new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']));
+  	}
+  	
+  	ob_end_flush();
   } 
 }
