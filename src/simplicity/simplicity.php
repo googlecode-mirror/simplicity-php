@@ -9,6 +9,7 @@ class Simplicity
   
   private $_id;
   
+  private $_www_root;
   private $_root;
   
   private $_temp;
@@ -76,12 +77,23 @@ class Simplicity
   private function initRoot ()
   {
     define("DS", DIRECTORY_SEPARATOR);
+    
     $path = realpath($_SERVER['DOCUMENT_ROOT']);
     if (substr($path, 0, - 1) != DS)
     {
       $path = $path . DS;
     }
+    $this->_www_root = $path;
+    define("SMP_WWW_ROOT", $this->_www_root);
+    
+    $path = realpath(dirname(dirname(__FILE__)));
+    if (substr($path, 0, - 1) != DS)
+    {
+      $path = $path . DS;
+    }
     $this->_root = $path;
+    define("SMP_ROOT", $this->_root);
+
     set_include_path(get_include_path() . ':' . $this->_root);
     return $this;
   }
@@ -111,8 +123,9 @@ class Simplicity
     } else
     {
       $temp = sys_get_temp_dir();
-      if (substr($temp, 0, - 1) != DS)
+      if (substr($temp, 0, - 1) != DS) {
         $temp = $temp . DS;
+      }
       $this->_temp = $temp . $this->_id . DS;
       if (! file_exists($this->_temp))
       {
