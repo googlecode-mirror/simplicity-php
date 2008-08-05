@@ -2,22 +2,27 @@
 
 class smp_Error {
 
+  private $_display = true;	
+	
   private $_exception_map = array(
     'default' => 'smp_ExceptionDisplay',
   	'ErrorException' => 'smp_ErrorExceptionDisplay'
   );
   
-  public function __construct() {
+  public function __construct($display_errors = true) {
     error_reporting(E_ALL | E_STRICT | E_NOTICE);
     ini_set('display_errors',false);
     
+    $this->_display = $display_errors;
+    
     set_error_handler(array($this,'handleError'));
     set_exception_handler(array($this,'handleException'));
-    
 	register_shutdown_function(array($this,'shutdownFunction'));
   }
   
   private function display(Exception $e) {
+  	if (!$this->_display) return;
+  	
     $class = get_class($e);
     if (!isset($this->_exception_map[$class])) {
       $class = 'default';
