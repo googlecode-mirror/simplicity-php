@@ -13,6 +13,7 @@ class smp_Error {
     
     set_error_handler(array($this,'handleError'));
     set_exception_handler(array($this,'handleException'));
+    
 	register_shutdown_function(array($this,'shutdownFunction'));
   }
   
@@ -38,12 +39,15 @@ class smp_Error {
   }
   
   public function handleException(Exception $e) {
-      $this->display($e);
+  		restore_error_handler();
+  		restore_exception_handler();
+  		$this->display($e);
   } 
   
   public function shutdownFunction() {
   	restore_error_handler();
   	restore_exception_handler();
+  	ini_set('display_errors',true);
   	
   	$error = error_get_last();
   	if (is_array($error) && ($error['type'] == E_PARSE || $error['type'] == E_ERROR)) { 

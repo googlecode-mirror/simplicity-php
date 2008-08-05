@@ -9,14 +9,53 @@ class smp_ExceptionDisplay
 	
   public function display()
   {
-  	echo $this->getHeader('Error');
+  	echo $this->pageHeader('PHP Error');
   	echo $this->getMessage();
-  	echo $this->getTrace();
   	echo $this->getCode();
+  	echo $this->getTrace();
+  	echo $this->getGlobals();
+  	echo $this->pageFooter();
   }
   
-  protected function getHeader($msg) {
-  	return "<h1>{$msg}</h1>";
+  protected function pageHeader($title="PHP Error") { 
+  	$out = "";
+  	$out .= "<html>";
+  	$out .= "
+  		<head>
+  			<title>{$title}</title>
+  			<script type='text/javascript' src='http://code.jquery.com/jquery-1.2.6.min.js'></script>
+  			<script type='text/javascript'>
+  				$(document).ready(function() {
+  					$('.hiddencode').toggle();
+  					$('a.showcode').click(function () {
+  						var id = $(this).attr('id').replace('tog','');
+  						if ($(this).html().indexOf('Show') != '-1') {
+  							var txt = $(this).html().replace('Show','Hide');
+  						} else {
+  							var txt = $(this).html().replace('Hide','Show');
+  						}
+  						$(this).html(txt);
+      					$('#'+id).slideToggle();
+    				});
+  				});
+  			</script>
+  		</head>
+  	";
+  	$out .= "<body><h1>{$title}</h1>";
+  	return $out;
+  }
+  
+  protected function pageFooter() {
+  	$out = "</body></html>";
+  	return $out;
+  }
+  
+  protected function getGlobals() {
+  	$out  = "<h2>Globals</h2><p><a id='togglobals' class='showcode' style='cursor:pointer;text-decoration:underline;'>Show Globals</a></p>";
+  	$out .= "<pre id='globals' class='hiddencode'>";
+  	$out .= print_r($GLOBALS,1);
+  	$out .= "</pre>";
+  	return $out; 
   }
   
   protected function getMessage($msg = '<p>{msg} on line {line} in file {file}</p>') {
@@ -30,32 +69,52 @@ class smp_ExceptionDisplay
   	$trace = $this->_exception->getTrace();
   	array_shift($trace);
   	foreach ($trace as &$trc) {
-  		foreach ($trc['args'] as &$arg) {
-  			if (is_scalar($arg)) {
-  				if (!is_numeric($arg)) {
-  					if (stristr($arg,'"')) {
-  						$arg = "'{$arg}'";		
-  					}
-  					else {
-  						$arg = '"'.$arg."'";
-  					}
-  				} 
-  			}
+  		if (isset($trc['args']) && is_array($trc['args'])) {
+	  		foreach ($trc['args'] as &$arg) {
+	  			if (is_scalar($arg)) {
+	  				if (!is_numeric($arg)) {
+	  					if (stristr($arg,'"')) {
+	  						$arg = "'{$arg}'";		
+	  					}
+	  					else {
+	  						$arg = '"'.$arg.'"';
+	  					}
+	  				} 
+	  			}
+	  		}
+  		} else {
+  			$trc['args'] = array();
   		}
   	}
-  	return "<h2>Trace</h2>".print_r($trace,1);
+  	
+  	ob_start();
+  	foreach ($trace as $k => $item) {
+  		print "<div style='margin-bottom:10px;border-bottom:1px solid #aaa;padding-bottom:5px;width:900px'>";
+  		$args = implode(',',$item['args']);
+  		print "<p><b>line {$item['line']}</b> in file <b>{$item['file']}</b></p>";
+  		print "<pre>{$item['function']}({$args});</pre>";
+  		print "<p><a id='togcode{$k}' class='showcode' style='cursor:pointer;text-decoration:underline;'>Show Code</a></p>";
+  		print "<div class='hiddencode' id='code{$k}'>";
+  		print $this->getCodeHTML($item['file'],$item['line']);
+  		print "</div>";
+  		print "</div>";	
+  	} 
+  	return "<h2>Trace</h2>".ob_get_clean();
   }
 
-  protected function getCode($lines = 10) {
-  		 
+  protected function getCode($lines = 15) {
+  	$out  = "";
+  	print "<p><a id='togmaincode' class='showcode' style='cursor:pointer;text-decoration:underline;'>Show Code</a></p>";
+  	$out .= "<div class='hiddencode' id='maincode'>";
+  	$out .= $this->getCodeHTML($this->_exception->getFile(),$this->_exception->getLine(),$lines);
+  	$out .= "</div>";
+  	return $out; 
   }
   
-  private function getCodeHTML($lines = 10,$file) {
-  	$file = $this->_exception->getFile();
-  	$aline = $this->_exception->getLine() - 1; 
+  private function getCodeHTML($file,$aline,$lines = 10) { 
   	
   	$start = ($aline - $lines);
- 
+
   	if ($start < 0) {
   		$start = 0;
   	} 
@@ -71,6 +130,6 @@ class smp_ExceptionDisplay
   		$str = "<pre style='background:{$background};padding:3px;margin:0px;border-bottom:1px solid #ccc'>{$line} {$str}</pre>";
   	}
   	
-  	return "<h2>Code</h2><div style='width:600px;border-top:1px solid #ccc'>".implode($file)."</div>";
+  	return "<div style='width:600px;border-top:1px solid #ccc'>".implode($file)."</div>";
   }
 }
