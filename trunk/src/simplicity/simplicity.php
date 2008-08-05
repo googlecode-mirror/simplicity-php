@@ -15,8 +15,9 @@ class Simplicity
   private $_temp;
   
   private $_bootstrap;
-  
   private $_bootstrap_queue = array('smp_InitRegistry');
+  
+  private $_mode;
   
   private $_shared = array();
 
@@ -55,14 +56,15 @@ class Simplicity
   {
     return $this->_id;
   }
-
+  
   /**
    * Initializes Simplicity.
    *
    * @return Simplicity
    */
-  public function init ()
+  public function init ($mode = 'live')
   {
+  	$this->_mode = $mode;
   	ob_start();
     $this->initRoot()->initId()->initTemp()->initUtils()->initLoader()->initError();
     $this->_init = true;
@@ -168,7 +170,7 @@ class Simplicity
    */
   private function initError ()
   {
-    $error = new smp_Error();
+    $error = new smp_Error(($this->_mode == 'live') ? false : true);
     $this->set('error', $error);
     return $this;
   }
@@ -253,11 +255,11 @@ class Simplicity
   /**
    * Runs the Simplicity framework.
    */
-  public function start ()
+  public function start ($mode = 'live')
   {
     if (! $this->_init)
     {
-      $this->init();
+      $this->init($mode);
     }
     if (! ($this->get('bootstrap') instanceof smp_Bootstrap))
     {
