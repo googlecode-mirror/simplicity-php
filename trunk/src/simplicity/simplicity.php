@@ -2,30 +2,31 @@
 
 class Simplicity
 {
-  
   private static $_instance;
-  
-  private $_init;
   
   private $_id;
   
-  private $_www_root;
   private $_root;
+  private $_www_root;
+  private $_app_root;
   
   private $_temp;
   
-  private $_bootstrap;
-  private $_bootstrap_queue = array('smp_InitRegistry');
+  private $_core_modules = array(
+  	"smp_Loader"
+  );
+  private $_modules = array();
+  private $_loaded_modules = array();
   
-  private $_mode;
+  private $_opts = array();
   
-  private $_shared = array();
+  private $_init = false;
+  
+  private function __construct ($opts = array()) {
+  	$this->_opts = $opts;
+  }
 
-  private function __construct ()
-  {}
-
-  private function __clone ()
-  {}
+  private function __clone () {}
 
   /**
    * Returns an instance of the Simplicity class or supplied string name
@@ -66,9 +67,14 @@ class Simplicity
   {
   	$this->_mode = $mode;
   	ob_start();
-    $this->initRoot()->initId()->initTemp()->initUtils()->initLoader()->initError();
+    
+  	$this->initRoot();
+    $this->initId();
+    $this->initTemp();
+    $this->initUtils();
+    $this->initModules();
+    
     $this->_init = true;
-    return $this;
   }
 
   /**
@@ -80,24 +86,28 @@ class Simplicity
   {
     define("DS", DIRECTORY_SEPARATOR);
     
-    $path = realpath($_SERVER['DOCUMENT_ROOT']);
-    if (substr($path, 0, - 1) != DS)
-    {
-      $path = $path . DS;
-    }
-    $this->_www_root = $path;
-    define("SMP_WWW_ROOT", $this->_www_root);
-    
     $path = realpath(dirname(dirname(__FILE__)));
     if (substr($path, 0, - 1) != DS)
     {
       $path = $path . DS;
     }
     $this->_root = $path;
-    define("SMP_ROOT", $this->_root);
+    
+    $path = isset($this->_opts['www_root']) ? $this->_opts['www_root'] : realpath($_SERVER['DOCUMENT_ROOT']);
+    if (substr($path, 0, - 1) != DS)
+    {
+      $path = $path . DS;
+    }
+    $this->_www_root = $path;
+    
+    $path = isset($this->_opts['app_root']) ? $this->_opts['app_root'] : $this->_root.DS.'app';
+    if (substr($path, 0, - 1) != DS)
+    {
+      $path = $path . DS;
+    }
+    $this->_app_root = $path;
 
-    set_include_path(get_include_path() . ':' . $this->_root);
-    return $this;
+    set_include_path(get_include_path() . ':' . $this->_root.':'.$this->_app_root);
   }
 
   /**
@@ -108,7 +118,6 @@ class Simplicity
   private function initId ()
   {
     $this->_id = md5(__FILE__);
-    return $this;
   }
 
   /**
@@ -118,7 +127,10 @@ class Simplicity
    */
   private function initTemp ()
   {
-    $temp = $this->_root . 'app' . DS . 'temp' . DS;
+    $temp = isset($this->_opts['temp']) ? $this->_opts['temp'] : $this->_root . 'app' . DS . 'temp' . DS;
+    if (substr($temp, 0, - 1) != DS) {
+    	$temp = $temp . DS;
+    }
     if (is_writable($temp))
     {
       $this->_temp = $temp;
@@ -134,7 +146,6 @@ class Simplicity
         mkdir($this->_temp, 0777, true);
       }
     }
-    return $this;
   }
 
   /**
@@ -144,127 +155,65 @@ class Simplicity
    */
   private function initUtils ()
   {
-    $this->load('simplicity/core/utils/file.php');
-    return $this;
+    require $this->_root.'simplicity/core/utils/file.php';
   }
 
+  private function initModules () {
+  	require $this->_root.'simplicity/core/module/module.php';
+  }
+  
   /**
-   * Configures the autoloader.
+   * Register a Simplicity module $class.
    *
-   * @return Simplicity
+   * @param string $class
    */
-  private function initLoader ()
+  public function registerModule ($class)
   {
-    $this->load('simplicity/core/loader/loader.php');
-    $opts = array('paths' => array('simplicity' . DS . 'core' , 'simplicity' . DS . 'bootstrap' , 'simplicity' . DS . 'interface' , 'app' . DS . 'modules') , 'temp' => $this->_temp);
-    $loader = new smp_Loader($this->_root, $opts);
-    $this->set('loader', $loader);
-    spl_autoload_register(array($this , 'load'));
-    return $this;
+  	$this->_modules[$class] = $class;
   }
 
   /**
-   * Initializes the error handler.
+   * Enter description here...
    *
-   * @return Simplicity
    */
-  private function initError ()
-  {
-    $error = new smp_Error(($this->_mode == 'live') ? false : true);
-    $this->set('error', $error);
-    return $this;
+  private function loadModules() {
+  	
   }
-
+  
   /**
-   * Initializes the bootstrap queue optionally overriding the default with array $queue.
-   *
-   * @see smp_Bootstrap
-   * @param array $queue
-   */
-  public function initBootstrap ($queue = null)
-  {
-    if (! isset($queue))
-    {
-      $queue = $this->_bootstrap_queue;
-    }
-    $bs = new smp_Bootstrap($queue, array('args' => array('simplicity' => $this)));
-    $this->set('bootstrap', $bs);
-    return $this;
-  }
-
-  /**
-   * Load the requested file or class. If a class is requested, the class loader module must be loaded.
-   *
-   * @param string $class_or_path
-   * @return bool
-   */
-  public function load ($class_or_path)
-  {
-    $class_or_path = str_replace('/', DS, $class_or_path);
-    if (file_exists($class_or_path))
-    {
-      if (include ($class_or_path))
-      {
-        return true;
-      }
-    } elseif (file_exists($this->_root . $class_or_path))
-    {
-      return $this->load($this->_root . $class_or_path);
-    } else
-    {
-      if ($this->get('loader') instanceof smp_Loader)
-      {
-        $path = $this->get('loader')->find($class_or_path);
-        if ($path)
-        {
-          return $this->load($path);
-        }
-        return false;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Register a shared object $instance to the given $key.  
-   *
-   * @param string $name
-   * @param object $obj
-   */
-  public function set ($key, $instance)
-  {
-    if (! isset($this->_shared[$key]))
-    {
-      $this->_shared[$key] = $instance;
-    } else
-    {
-      throw new Exception("Attempted to write to existing key {$key}.");
-    }
-  }
-
-  /**
-   * Retrieve a shared object instance from the given $key.
+   * Retrieve a previously loaded module.
    *
    * @param string $key
    */
-  public function get ($key)
+  public function getModule ($task)
   {
-    return isset($this->_shared[$key]) ? $this->_shared[$key] : null;
+  	if (isset($this->_modules[$task]) && $this->_modules[$task] instanceof smp_Module) {
+  		return $this->_modules[$task];	
+  	}
+  	return false;
   }
 
+  public function getTemp() {
+  	return $this->_temp;
+  }
+  
+  public function getRoot() {
+  	return $this->_root;
+  }
+  
+  public function getWwwRoot() {
+  	return $this->_www_root;
+  }
+  
   /**
    * Runs the Simplicity framework.
    */
   public function start ($mode = 'live')
   {
-    if (! $this->_init)
+    if (!$this->_init)
     {
       $this->init($mode);
     }
-    if (! ($this->get('bootstrap') instanceof smp_Bootstrap))
-    {
-      $this->initBootstrap();
-    }
-    $this->get('bootstrap')->execQueue();
+    $this->loadModules();
   }
 }

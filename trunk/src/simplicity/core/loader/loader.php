@@ -34,11 +34,15 @@ class smp_Loader
     {
       foreach ($this->_opts['paths'] as $path)
       {
+      	$path = $this->_root.$path;
+      	print_r($path);
         if (file_exists($path)) {
           $this->harvest($path);  
         }
       }
     }
+    
+    spl_autoload_register(array($this , 'load'));
   }
 
   public function __destruct ()
@@ -49,7 +53,17 @@ class smp_Loader
       smp_File::serialize($tmp . 'class_reg.php', $this->_class_registry);
     }
   }
-
+	
+  public function load ($class) {
+  	$path = $this->find($class);
+  	if (file_exists($path)) {
+  		include $path;
+  		return true;
+  	}
+  	throw new Exception("Failed to load class '{$class}'.");
+  	return false;
+  }
+  
   public function find ($class)
   {
     if (class_exists($class))
@@ -80,7 +94,7 @@ class smp_Loader
             $class_token = ($k + 2);
             $class_token = $tokens[$class_token];
             if ($class_token[0] == T_STRING && $class_token[2] == $token[2])
-            {
+            {            	
               $this->_class_registry[$class_token[1]] = (string) $file;
             }
           }

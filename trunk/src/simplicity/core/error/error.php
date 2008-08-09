@@ -1,6 +1,6 @@
 <?php
 
-class smp_Error {
+class smp_Error extends smp_Module {
 
   private $_display = true;	
 	
